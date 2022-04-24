@@ -1,0 +1,66 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: radarr
+  labels:
+    app: radarr
+    part-of: radarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radarr
+      part-of: radarr
+  template:
+    metadata:
+      labels:
+        app: radarr
+        part-of: radarr
+    spec:
+      containers:
+      - name: radarr
+        image: ghcr.io/linuxserver/radarr:4.0.5-nightly-alpine
+        ports:
+        - name: radarr
+          containerPort: 7878
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: "Europe/Paris"
+        - name: UMASK
+          value: "022"
+        volumeMounts:
+        - name: radarr
+          mountPath: /config
+        - name: movies
+          mountPath: /movies
+        - name: downloads
+          mountPath: /downloads/movies
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            memory: 150Mi
+        readinessProbe:
+          tcpSocket:
+            port: radarr
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: radarr
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      volumes:
+      - name: radarr
+        persistentVolumeClaim:
+          claimName: radarr
+      - name: movies
+        persistentVolumeClaim:
+          claimName: movies
+      - name: downloads
+        persistentVolumeClaim:
+          claimName: downloads
